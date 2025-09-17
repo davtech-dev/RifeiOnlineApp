@@ -79,9 +79,9 @@
 import api from '@/services/api' // Nossa instância Axios configurada
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css' // Importa o tema do editor
+import axios from 'axios' // Importa o axios global para o upload direto
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'; // Importa o axios global para o upload direto
 
 const router = useRouter()
 
@@ -95,7 +95,7 @@ const raffle = ref({
   awards: [{ placement: 1, description: '' }],
 })
 
-const selectedFiles = ref([]);
+const selectedFiles = ref([])
 
 // Estado de controle da UI
 const isSubmitting = ref(false)
@@ -104,11 +104,11 @@ const successMessage = ref('')
 
 // NOVO: Função para lidar com a seleção de arquivos
 function handleFileSelect(event) {
-  selectedFiles.value = Array.from(event.target.files);
+  selectedFiles.value = Array.from(event.target.files)
 }
 // NOVO: Função para gerar URLs de pré-visualização
 function getPreviewUrl(file) {
-    return URL.createObjectURL(file);
+  return URL.createObjectURL(file)
 }
 // Funções para adicionar/remover campos dinâmicos
 const addAward = () => {
@@ -118,69 +118,73 @@ const removeAward = (index) => {
   raffle.value.awards.splice(index, 1)
 }
 
-// Função de envio do formulário
 async function handleSubmit() {
   isSubmitting.value = true
   errorMessage.value = ''
   successMessage.value = ''
 
   try {
-    // 1. Fazer o upload das imagens primeiro
-    const uploadedImageUrls = [];
+    const uploadedImageUrls = []
     if (selectedFiles.value.length > 0) {
-      // Pega a assinatura do nosso backend
-      const sigResponse = await api.get('/api/upload/generate-signature');
-      const { timestamp, signature } = sigResponse.data;
+      const uploadPromises = selectedFiles.value.map(async (file) => {
+        const timestamp = Math.round(new Date().getTime() / 1000)
+        const folder = 'rifas' // Define a pasta aqui
 
-      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-      const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY;
-      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+        // 1. Monta o payload de parâmetros que serão enviados ao Cloudinary E assinados pelo backend
+        const paramsToSign = {
+          timestamp: timestamp,
+          folder: folder,
+        }
 
-      const uploadPromises = selectedFiles.value.map(file => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('api_key', apiKey);
-        formData.append('timestamp', timestamp);
-        formData.append('signature', signature);
-        // Opcional: pasta no Cloudinary
-        formData.append('folder', 'rifas'); 
+        // 2. Pede ao NOSSO backend para assinar este payload específico
+        const sigResponse = await api.post('/api/upload/generate-signature', paramsToSign)
+        const { signature } = sigResponse.data
 
-        return axios.post(uploadUrl, formData);
-      });
+        // 3. Monta o FormData final para o Cloudinary
+        const formData = new FormData()
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+        const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
 
-      const uploadResults = await Promise.all(uploadPromises);
-      uploadResults.forEach(result => {
-        uploadedImageUrls.push({ url: result.data.secure_url, is_primary: false });
-      });
+        formData.append('file', file)
+        formData.append('api_key', apiKey)
+
+        // Adiciona todos os parâmetros que foram assinados
+        for (const key in paramsToSign) {
+          formData.append(key, paramsToSign[key])
+        }
+        formData.append('signature', signature)
+
+        // 4. Envia o arquivo DIRETAMENTE para o Cloudinary
+        const uploadResult = await axios.post(uploadUrl, formData)
+        return { url: uploadResult.data.secure_url, is_primary: false }
+      })
+
+      // Espera todos os uploads terminarem
+      const results = await Promise.all(uploadPromises)
+      uploadedImageUrls.push(...results)
     }
 
-    // Define a primeira imagem como principal, se houver
     if (uploadedImageUrls.length > 0) {
-        uploadedImageUrls[0].is_primary = true;
+      uploadedImageUrls[0].is_primary = true
     }
-    
-    // 2. Monta o payload final com as URLs das imagens
-    const finalPayload = {
-      ...raffle.value,
-      images: uploadedImageUrls,
-    };
 
-    // 3. Envia o payload final para a API
-    const response = await api.post('/api/raffles', raffle.value)
+    // 5. Envia os dados da rifa, incluindo as URLs das imagens, para o nosso backend
+    const finalPayload = { ...raffle.value, images: uploadedImageUrls }
+    const response = await api.post('/api/raffles', finalPayload)
 
     successMessage.value = `Rifa criada com sucesso! ID: ${response.data.raffleId}`
-
-    // Limpa o formulário e redireciona após um tempo
     setTimeout(() => {
-      router.push({ name: 'admin-rifas' }) // Redireciona para a lista de rifas
+      router.push({ name: 'admin-rifas' })
     }, 2000)
   } catch (error) {
-    errorMessage.value = 'Falha ao criar a rifa. Verifique os campos e tente novamente.'
-    console.error(error)
+    errorMessage.value = 'Falha ao criar a rifa. Verifique o console para detalhes.'
+    console.error(error.response ? error.response.data : error)
   } finally {
     isSubmitting.value = false
   }
 }
+// Função de envio do formulário
 </script>
 
 <style scoped>

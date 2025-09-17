@@ -62,8 +62,8 @@ import { useAuthStore } from '@/stores/auth.store'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-const email = ref('')
-const password = ref('')
+const email = ref('davsonsantos@gmail.com')
+const password = ref('password')
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
@@ -81,7 +81,7 @@ async function handleLogin() {
 
   try {
     // Chama o backend que já está funcionando
-    const response = await api.post('/login', {
+    const response = await api.post('/api/auth/login', {
       email: email.value,
       password: password.value,
     })
@@ -91,6 +91,7 @@ async function handleLogin() {
 
     // **A MÁGICA ACONTECE AQUI**
     // Usa a ação da nossa store para salvar os dados e o token
+    console.log('user', user, 'token', token)
     authStore.login(user, token)
 
     // Redireciona para o dashboard, o guardião de rotas vai permitir
