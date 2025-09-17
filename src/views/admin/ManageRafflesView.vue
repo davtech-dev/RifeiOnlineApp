@@ -1,0 +1,3 @@
+<template>
+    gerenciar rifas
+</template>
