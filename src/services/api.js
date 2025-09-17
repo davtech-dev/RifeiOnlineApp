@@ -1,21 +1,32 @@
-// src/services/api.js
-
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth.store';
 
-// 1. Cria uma nova instância do Axios com configuração personalizada
+// Cria a instância do Axios com a URL base do nosso .env
 const api = axios.create({
-  // 2. Define a URL base para todas as requisições feitas com esta instância
-  //    O Vite substitui 'import.meta.env.VITE_API_BASE_URL' pelo valor do seu arquivo .env
   baseURL: import.meta.env.VITE_API_BASE_URL,
-
-  // 3. (Opcional) Você também pode definir headers padrão aqui
   headers: {
     'Content-Type': 'application/json',
   }
 });
 
-// Futuramente, aqui será o lugar perfeito para adicionar "interceptors"
-// para, por exemplo, anexar o token JWT a todas as requisições automaticamente.
+// --- INTERCEPTOR DE REQUISIÇÃO ---
+// Esta função será executada ANTES de cada requisição ser enviada.
+api.interceptors.request.use(
+  (config) => {
+    const authStore = useAuthStore();
+    const token = authStore.token;
 
-// 4. Exporta a instância configurada
+    // Se o token existir, anexa ao cabeçalho Authorization
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    // Faz algo com o erro da requisição
+    return Promise.reject(error);
+  }
+);
+
 export default api;

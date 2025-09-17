@@ -10,10 +10,7 @@
         <RouterView />
       </div>
     </main>
-    <footer
-      id="page-footer"
-      class="flex flex-none items-center bg-white dark:bg-gray-800"
-    >
+    <footer id="page-footer" class="flex flex-none items-center bg-white dark:bg-gray-800">
       <div
         class="container mx-auto flex flex-col px-4 text-center text-sm md:flex-row md:justify-between md:text-left lg:px-8 xl:max-w-7xl"
       >
@@ -53,9 +50,8 @@
       </div>
     </footer>
   </div>
-  <router-view />
 </template>
 
 <script setup lang="ts">
-import adminHeader from "./patials/adminHeader.vue";
+import adminHeader from './patials/adminHeader.vue'
 </script>
