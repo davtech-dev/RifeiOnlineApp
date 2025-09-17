@@ -1,0 +1,20 @@
+# Arquivo de configuração para a Netlify
+
+# Configurações de Build (boa prática para garantir que está tudo certo)
+[build]
+  # Comando que a Netlify usará para construir seu site
+  command = "npm run build"
+
+  # Pasta que será publicada após o build (onde está o seu site pronto)
+  publish = "dist"
+
+# A regra de redirecionamento que resolve o problema do 404
+[[redirects]]
+  # "Para qualquer rota que for acessada..."
+  from = "/*"
+
+  # "...sirva o arquivo /index.html"
+  to = "/index.html"
+
+  # "...com o status 200 (isso é uma reescrita, não um redirecionamento 301)"
+  status = 200
