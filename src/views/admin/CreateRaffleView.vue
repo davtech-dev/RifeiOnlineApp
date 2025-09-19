@@ -8,14 +8,43 @@
       </div>
 
       <div class="form-group">
-        <label>Descrição / Regras</label>
+        <label>Descrição</label>
         <QuillEditor
           theme="snow"
           toolbar="essential"
           v-model:content="raffle.description"
           contentType="html"
-          placeholder="Descreva os detalhes e as regras da sua rifa aqui..."
+          placeholder="Descreva os detalhes da sua rifa aqui..."
         />
+      </div>
+
+      <div class="form-group">
+        <label>Regras</label>
+        <QuillEditor
+          theme="snow"
+          toolbar="essential"
+          v-model:content="raffle.rules"
+          contentType="html"
+          placeholder="Informe as regras do sorteio, termos e condições..."
+        />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="draw_date">Data do Sorteio</label>
+          <input type="date" id="draw_date" v-model="raffle.draw_date" required />
+        </div>
+
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" v-model="raffle.status" required>
+            <option value="ativa">Ativa</option>
+            <option value="em_analise">Em Análise</option>
+            <option value="pausada">Pausada</option>
+            <option value="soteada">Cancelada</option>
+            <option value="cancelada">Sorteada</option>
+          </select>
+        </div>
       </div>
 
       <div class="form-row">
@@ -67,7 +96,6 @@
 
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
       <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
-
       <button type="submit" :disabled="isSubmitting" class="submit-btn">
         {{ isSubmitting ? 'Salvando...' : 'Salvar Rifa' }}
       </button>
@@ -76,19 +104,22 @@
 </template>
 
 <script setup>
-import api from '@/services/api' // Nossa instância Axios configurada
+import api from '@/services/api'
 import { QuillEditor } from '@vueup/vue-quill'
-import '@vueup/vue-quill/dist/vue-quill.snow.css' // Importa o tema do editor
-import axios from 'axios' // Importa o axios global para o upload direto
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import axios from 'axios'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// Estado do formulário
+// ** ATUALIZADO: Estado do formulário com os novos campos **
 const raffle = ref({
   title: '',
   description: '',
+  rules: '', // Novo campo para regras
+  draw_date: '', // Novo campo para data
+  status: 'ativa', // Novo campo para status, com valor padrão
   total_numbers: 100,
   price_per_number: 5.0,
   images: [{ url: '', is_primary: true }],
@@ -96,21 +127,16 @@ const raffle = ref({
 })
 
 const selectedFiles = ref([])
-
-// Estado de controle da UI
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
-// NOVO: Função para lidar com a seleção de arquivos
 function handleFileSelect(event) {
   selectedFiles.value = Array.from(event.target.files)
 }
-// NOVO: Função para gerar URLs de pré-visualização
 function getPreviewUrl(file) {
   return URL.createObjectURL(file)
 }
-// Funções para adicionar/remover campos dinâmicos
 const addAward = () => {
   raffle.value.awards.push({ placement: raffle.value.awards.length + 1, description: '' })
 }
@@ -122,57 +148,36 @@ async function handleSubmit() {
   isSubmitting.value = true
   errorMessage.value = ''
   successMessage.value = ''
-
   try {
     const uploadedImageUrls = []
     if (selectedFiles.value.length > 0) {
       const uploadPromises = selectedFiles.value.map(async (file) => {
         const timestamp = Math.round(new Date().getTime() / 1000)
-        const folder = 'rifas' // Define a pasta aqui
-
-        // 1. Monta o payload de parâmetros que serão enviados ao Cloudinary E assinados pelo backend
-        const paramsToSign = {
-          timestamp: timestamp,
-          folder: folder,
-        }
-
-        // 2. Pede ao NOSSO backend para assinar este payload específico
+        const folder = 'rifas'
+        const paramsToSign = { timestamp, folder }
         const sigResponse = await api.post('/api/upload/generate-signature', paramsToSign)
         const { signature } = sigResponse.data
-
-        // 3. Monta o FormData final para o Cloudinary
         const formData = new FormData()
         const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
         const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY
         const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
-
         formData.append('file', file)
         formData.append('api_key', apiKey)
-
-        // Adiciona todos os parâmetros que foram assinados
         for (const key in paramsToSign) {
           formData.append(key, paramsToSign[key])
         }
         formData.append('signature', signature)
-
-        // 4. Envia o arquivo DIRETAMENTE para o Cloudinary
         const uploadResult = await axios.post(uploadUrl, formData)
         return { url: uploadResult.data.secure_url, is_primary: false }
       })
-
-      // Espera todos os uploads terminarem
       const results = await Promise.all(uploadPromises)
       uploadedImageUrls.push(...results)
     }
-
     if (uploadedImageUrls.length > 0) {
       uploadedImageUrls[0].is_primary = true
     }
-
-    // 5. Envia os dados da rifa, incluindo as URLs das imagens, para o nosso backend
     const finalPayload = { ...raffle.value, images: uploadedImageUrls }
     const response = await api.post('/api/raffles', finalPayload)
-
     successMessage.value = `Rifa criada com sucesso! ID: ${response.data.raffleId}`
     setTimeout(() => {
       router.push({ name: 'admin-rifas-listar' })
@@ -184,11 +189,19 @@ async function handleSubmit() {
     isSubmitting.value = false
   }
 }
-// Função de envio do formulário
 </script>
 
 <style scoped>
-/* Estilos para o formulário */
+/* Adicione este estilo para o select e input de data */
+input[type='date'],
+select {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white; /* Garante fundo branco em todos os navegadores */
+}
+
+/* Seus outros estilos permanecem aqui... */
 .create-raffle-container {
   max-width: 800px;
   margin: auto;
@@ -224,11 +237,6 @@ input[type='number'] {
 .dynamic-item input[type='text'] {
   flex-grow: 1;
 }
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
 .add-btn,
 .remove-btn,
 .submit-btn {
@@ -259,8 +267,32 @@ input[type='number'] {
 .success-message {
   color: #2f855a;
 }
-/* Estilo para o container do Quill Editor */
 :deep(.ql-editor) {
   min-height: 150px;
+}
+
+/* NOVO: Estilos para preview de imagem */
+.image-preview-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.image-preview {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  border-radius: 4px;
+  text-align: center;
+}
+.image-preview img {
+  max-width: 100%;
+  height: 80px;
+  object-fit: cover;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.image-preview span {
+  font-size: 0.8rem;
+  word-break: break-all;
 }
 </style>

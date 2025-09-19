@@ -5,8 +5,8 @@
       <h3 class="raffle-name">{{ raffle.name }}</h3>
       <div class="raffle-details">
         <p><strong>Sorteio:</strong> {{ formattedDate }}</p>
-        <p><strong>Números:</strong> {{ raffle.ticketCount }}</p>
-        <span :class="['status-badge', statusClass]">{{ raffle.status }}</span>
+        <p><strong>Números:</strong> {{ raffle.total_numbers }}</p>
+        <div :class="['status-badge', statusClass]">{{ formattedStatus }}</div>
       </div>
     </div>
     <div class="raffle-actions">
@@ -32,15 +32,33 @@ const emit = defineEmits(['edit', 'delete'])
 
 // Formata a data para um padrão mais legível (ex: 25/12/2025)
 const formattedDate = computed(() => {
-  return new Date(props.raffle.drawDate).toLocaleDateString('pt-BR')
+  return new Date(props.raffle.draw_date).toLocaleDateString('pt-BR')
 })
 
 // Calcula uma classe CSS dinâmica baseada no status da rifa para estilização
 const statusClass = computed(() => {
-  if (props.raffle.status === 'Aberta') return 'status-open'
-  if (props.raffle.status === 'Finalizada') return 'status-closed'
-  return 'status-default'
+  if (props.raffle.status === 'ativa')
+    return 'inline-flex  rounded-sm bg-emerald-800 px-2 py-1 text-sm leading-4 font-semibold text-emerald-700'
+  if (props.raffle.status === 'em_analise')
+    return 'inline-flex rounded-sm bg-orange-500 px-2 py-1 text-sm leading-4 font-semibold text-orange-700'
+  if (props.raffle.status === 'pausada')
+    return 'inline-flex rounded-sm bg-purple-800 px-2 py-1 text-sm leading-4 font-semibold text-purple-700'
+  if (props.raffle.status === 'soteada')
+    return 'inline-flex rounded-sm bg-primary-800 px-2 py-1 text-sm leading-4 font-semibold text-primary-700'
+  if (props.raffle.status === 'cancelada')
+    return 'inline-flex rounded-sm bg-red-500 px-2 py-1 text-sm leading-4 font-semibold text-red-700'
+  return 'Indefinido'
 })
+
+const formattedStatus = computed(() => {
+  const status = props.raffle.status;
+  if (status === 'ativa') return 'Ativa';
+  if (status === 'em_analise') return 'Em Análise';
+  if (status === 'pausada') return 'Pausada';
+  if (status === 'sorteada') return 'Sorteada'; // Corrigido
+  if (status === 'cancelada') return 'Cancelada';
+  return 'Indefinido';
+});
 
 // Funções que emitem os eventos para o componente pai quando os botões são clicados
 const onEdit = () => {
