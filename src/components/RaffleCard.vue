@@ -1,8 +1,8 @@
 <template>
   <div class="raffle-card">
-    <img :src="raffle.imageUrl" :alt="raffle.name" class="raffle-image" />
+    <img :src="raffle.imageUrl" :alt="raffle.title" class="raffle-image" />
     <div class="raffle-info">
-      <h3 class="raffle-name">{{ raffle.name }}</h3>
+      <h3 class="raffle-name">{{ raffle.title }}</h3>
       <div class="raffle-details">
         <p><strong>Sorteio:</strong> {{ formattedDate }}</p>
         <p><strong>Números:</strong> {{ raffle.total_numbers }}</p>
@@ -43,7 +43,7 @@ const statusClass = computed(() => {
     return 'inline-flex rounded-sm bg-orange-500 px-2 py-1 text-sm leading-4 font-semibold text-orange-700'
   if (props.raffle.status === 'pausada')
     return 'inline-flex rounded-sm bg-purple-800 px-2 py-1 text-sm leading-4 font-semibold text-purple-700'
-  if (props.raffle.status === 'soteada')
+  if (props.raffle.status === 'sorteada')
     return 'inline-flex rounded-sm bg-primary-800 px-2 py-1 text-sm leading-4 font-semibold text-primary-700'
   if (props.raffle.status === 'cancelada')
     return 'inline-flex rounded-sm bg-red-500 px-2 py-1 text-sm leading-4 font-semibold text-red-700'
@@ -51,14 +51,15 @@ const statusClass = computed(() => {
 })
 
 const formattedStatus = computed(() => {
-  const status = props.raffle.status;
-  if (status === 'ativa') return 'Ativa';
-  if (status === 'em_analise') return 'Em Análise';
-  if (status === 'pausada') return 'Pausada';
-  if (status === 'sorteada') return 'Sorteada'; // Corrigido
-  if (status === 'cancelada') return 'Cancelada';
-  return 'Indefinido';
-});
+  const status = props.raffle.status
+  console.log(status)
+  if (status === 'ativa') return 'Ativa'
+  if (status === 'em_analise') return 'Em Análise'
+  if (status === 'pausada') return 'Pausada'
+  if (status === 'sorteada') return 'Sorteada' // Corrigido
+  if (status === 'cancelada') return 'Cancelada'
+  return 'Indefinido'
+})
 
 // Funções que emitem os eventos para o componente pai quando os botões são clicados
 const onEdit = () => {

@@ -107,17 +107,30 @@ const handleEditRaffle = (raffleId) => {
 }
 
 const handleDeleteRaffle = async (raffleId) => {
+  // A confirmação do usuário continua sendo uma boa prática
   if (!confirm('Você tem certeza que deseja excluir esta rifa? Esta ação não pode ser desfeita.')) {
     return
   }
+
   try {
+    // 1. Chamar a API para deletar a rifa no backend
     await api.delete(`/api/raffles/${raffleId}`)
-    // Recarrega a página atual para refletir a exclusão
-    fetchRaffles(currentPage.value)
+
+    // 2. Atualizar o estado local (UI) apenas em caso de sucesso
+    raffles.value = raffles.value.filter((raffle) => raffle.id !== raffleId)
+
     alert('Rifa excluída com sucesso!')
   } catch (err) {
     console.error('Erro ao excluir rifa:', err)
-    alert('Erro ao excluir a rifa. Tente novamente.')
+    // ** AQUI ESTÁ A MELHORIA **
+    // Verifica se a resposta do erro contém nossa mensagem de negócio
+    if (err.response && err.response.data && err.response.data.error) {
+      // Exibe a mensagem de erro específica vinda do backend
+      alert(`Não foi possível excluir: ${err.response.data.error}`)
+    } else {
+      // Exibe uma mensagem genérica para outros tipos de erro (ex: rede)
+      alert('Ocorreu um erro inesperado ao tentar excluir a rifa.')
+    }
   }
 }
 </script>
