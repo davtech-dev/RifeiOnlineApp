@@ -175,7 +175,7 @@ async function handleSubmit() {
 
     successMessage.value = `Rifa criada com sucesso! ID: ${response.data.raffleId}`
     setTimeout(() => {
-      router.push({ name: 'admin-rifas' })
+      router.push({ name: 'admin-rifas-listar' })
     }, 2000)
   } catch (error) {
     errorMessage.value = 'Falha ao criar a rifa. Verifique o console para detalhes.'

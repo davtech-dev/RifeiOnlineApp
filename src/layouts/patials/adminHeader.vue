@@ -30,24 +30,12 @@
             >
               Home
             </RouterLink>
-            <a
-              href="#"
+            <RouterLink
               class="group flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 hover:text-white active:border-gray-600"
+              :to="{ name: 'admin-rifas-listar' }"
             >
-              <span>Customers</span>
-            </a>
-            <a
-              href="#"
-              class="group flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 hover:text-white active:border-gray-600"
-            >
-              <span>Projects</span>
-            </a>
-            <a
-              href="#"
-              class="group flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 hover:text-white active:border-gray-600"
-            >
-              <span>Sales</span>
-            </a>
+              <span>Rifas</span>
+            </RouterLink>
           </nav>
         </div>
 
@@ -214,24 +202,12 @@
           >
             <span>Dashboard</span>
           </a>
-          <a
-            href="#"
+          <RouterLink
             class="group flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white active:border-white/20"
+            :to="{ name: 'admin-rifas-listar' }"
           >
-            <span>Customers</span>
-          </a>
-          <a
-            href="#"
-            class="group flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white active:border-white/20"
-          >
-            <span>Projects</span>
-          </a>
-          <a
-            href="#"
-            class="group flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white active:border-white/20"
-          >
-            <span>Sales</span>
-          </a>
+            <span>Rifas</span>
+          </RouterLink>
         </nav>
       </div>
     </div>
@@ -242,14 +218,14 @@
 import { useAuthStore } from '@/stores/auth.store'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { ref } from 'vue'
-import { useRouter } from 'vue-router';
+import { useRouter } from 'vue-router'
 
 const mobileNavOpen = ref(false)
 
-const router = useRouter();
+const router = useRouter()
 const authStore = useAuthStore()
 function handleLogout() {
-  authStore.logout();
-  router.push({ name: 'login' });
+  authStore.logout()
+  router.push({ name: 'login' })
 }
 </script>
